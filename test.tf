@@ -1,5 +1,5 @@
 provider "aws" {
-    region = "us-east-2"
+    region = "us-west-2"
 }
 
 resource "aws_key_pair" "my_instance_key_pair" {
@@ -27,28 +27,28 @@ resource "aws_route_table" "my_public_route_table" {
 }
 
 #Creating subnet1 in above VPC
-resource "aws_subnet" "my_subnet_public_east_2b" {
+resource "aws_subnet" "my_subnet_public_west_2b" {
     vpc_id = aws_vpc.my_vpc.id
     cidr_block = "10.0.0.0/24"
-    availability_zone = "us-east-2b"
+    availability_zone = "us-west-2b"
 }
 
 #Associating above routing table to above subnet1
-resource "aws_route_table_association" "my_public_route_association_for_east_2b" {
-    subnet_id = aws_subnet.my_subnet_public_east_2b.id
+resource "aws_route_table_association" "my_public_route_association_for_west_2b" {
+    subnet_id = aws_subnet.my_subnet_public_west_2b.id
     route_table_id = aws_route_table.my_public_route_table.id
 }
 
 #creating subnet2 in above VPC
-resource "aws_subnet" "my_subnet_public_east_2c" {
+resource "aws_subnet" "my_subnet_public_west_2c" {
     vpc_id = aws_vpc.my_vpc.id
     cidr_block = "10.0.1.0/24"
-    availability_zone = "us-east-2c"
+    availability_zone = "us-west-2c"
 }
 
 #Associating above routing table to above subnet2
-resource "aws_route_table_association" "my_public_route_association_for_east_2c" {
-    subnet_id = aws_subnet.my_subnet_public_east_2c.id
+resource "aws_route_table_association" "my_public_route_association_for_west_2c" {
+    subnet_id = aws_subnet.my_subnet_public_west_2c.id
     route_table_id = aws_route_table.my_public_route_table.id
 }
 
@@ -58,8 +58,8 @@ resource "aws_lb" "my_alb" {
     internal = false
     load_balancer_type = "application"
     security_groups = [aws_security_group.my_alb_security_group.id]
-    subnets = [ aws_subnet.my_subnet_public_east_2b.id,
-        aws_subnet.my_subnet_public_east_2c.id ]
+    subnets = [ aws_subnet.my_subnet_public_west_2b.id,
+        aws_subnet.my_subnet_public_west_2c.id ]
 }
 
 #Create security Group for above LB
@@ -91,7 +91,7 @@ resource "aws_lb_listener" "my_alb_listener" {
 }
 
 resource "aws_lb_target_group" "my_alb_target_group" {
-    port = 8888
+    port = 80
     protocol = "HTTP"
     vpc_id = aws_vpc.my_vpc.id
 }
@@ -99,13 +99,14 @@ resource "aws_lb_target_group" "my_alb_target_group" {
 
 resource "aws_launch_configuration" "my_launch_configuration" {
 
-    image_id = "ami-0ba62214afa52bec7"
+    image_id = "ami-06cffe063efe892ad"
 
     instance_type = "t2.micro"
     key_name = aws_key_pair.my_instance_key_pair.key_name
     security_groups = [aws_security_group.my_launch_config_security_group.id]
 
     associate_public_ip_address = true
+    user_data = "${file("install_apache.sh")}"
     lifecycle {
         create_before_destroy = true
     }
@@ -120,8 +121,8 @@ resource "aws_security_group" "my_launch_config_security_group" {
         cidr_blocks = ["0.0.0.0/0"]
     }
     ingress {
-        from_port = 8888
-        to_port = 8888
+        from_port = 80
+        to_port = 80
         protocol = "tcp"
         cidr_blocks = ["0.0.0.0/0"]
     }
@@ -152,8 +153,8 @@ resource "aws_autoscaling_group" "my_autoscaling_group" {
 
     launch_configuration = aws_launch_configuration.my_launch_configuration.id
     vpc_zone_identifier = [
-        aws_subnet.my_subnet_public_east_2b.id,
-        aws_subnet.my_subnet_public_east_2c.id
+        aws_subnet.my_subnet_public_west_2b.id,
+        aws_subnet.my_subnet_public_west_2c.id
     ]
     timeouts {
         delete = "15m"
