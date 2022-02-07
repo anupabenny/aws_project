@@ -142,8 +142,8 @@ resource "aws_autoscaling_attachment" "my_aws_autoscaling_attachment" {
 
 resource "aws_autoscaling_group" "my_autoscaling_group" {
     name = "my-autoscaling-group"
-    desired_capacity = 2
-    min_size = 2
+    desired_capacity = 1
+    min_size = 1
     max_size = 5
     enabled_metrics = ["GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity", "GroupInServiceInstances", "GroupTotalInstances"]
     metrics_granularity = "1Minute"
